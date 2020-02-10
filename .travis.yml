@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t tmcelhattan/react-test -f ./client/Dockerfile.dev .
+
+script:
+  - docker run -e CI=true tmcelhattan/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t tmcelhattan/multi-client ./client
+  - docker build -t tmcelhattan/multi-nginx ./nginx
+  - docker build -t tmcelhattan/multi-server ./server
+  - docker build -t tmcelhattan/multi-worker ./worker
+  # Log into Docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # push images 
+  - docker push tmcelhattan/multi-client
+  - docker push tmcelhattan/multi-nginx
+  - docker push tmcelhattan/multi-server
+  - docker push tmcelhattan/multi-worker
